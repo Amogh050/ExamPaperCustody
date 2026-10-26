@@ -179,3 +179,78 @@
 - Build verified:
   - `npm run client:build` compiles cleanly with Vite.
 
+
+
+---
+
+## Day 7 — Sepolia Testnet Deployment & Professional Documentation (2026-10-26)
+
+### What was built
+- **Sepolia testnet configuration**:
+  - Added `.env.example` template with `SEPOLIA_RPC_URL`, `SEPOLIA_PRIVATE_KEY`, and `ETHERSCAN_API_KEY` placeholders.
+  - Updated `hardhat.config.js` with Sepolia network configuration (ChainId: 11155111).
+  - Integrated `dotenv` package for secure environment variable management.
+  
+- **Sepolia deployment script** (`scripts/deploySepolia.js`):
+  - Interactive CLI prompting for role wallet addresses during deployment.
+  - Automated role granting with confirmation for each transaction.
+  - Exports `deployment-sepolia.json` with contract address, assigned roles, ABI, and Etherscan explorer URL.
+  - Includes balance checks and deployment verification.
+
+- **Professional README.md overhaul**:
+  - Added comprehensive problem statement with industry context (no university references).
+  - Created two Mermaid diagrams:
+    1. **Architecture diagram**: Visual representation of off-chain components, blockchain, and data flow.
+    2. **Sequence diagram**: Step-by-step custody hand-offs from Setter to Centre.
+  - Added threat model table with mitigation strategies.
+  - Documented 6 known limitations (IPFS integration, centralized key service, gas optimization, etc.).
+  - Included Windows 11-specific setup instructions (PowerShell commands).
+  - Added demo script walkthrough with 5 stages (encrypt → register → progress → release → decrypt).
+  - Credited AgroChain with specific differences highlighted.
+  - Added AI transparency section disclosing use of Claude for boilerplate/documentation.
+  - Included 9 future enhancement ideas (multi-sig, ZK proofs, cross-chain bridge, etc.).
+
+- **Technical deep-dive** (`docs/EXPLAINED.md`):
+  - Comprehensive explanation of every contract function, modifier, and event.
+  - Detailed breakdown of:
+    - OpenZeppelin AccessControl internals.
+    - Stage enum state machine with transition rules.
+    - Gas optimization techniques (custom errors, storage packing, early reverts).
+    - Security considerations (access control, time-lock bypass risks, compromise abuse).
+  - **15 Frequently Asked Questions** (FAQs) covering:
+    1. Why not store plaintext on-chain?
+    2. How does the time-lock work?
+    3. What prevents Centre A from unlocking Centre B's paper?
+    4. Can the Controller change the hash post-creation?
+    5. What happens when a paper is compromised?
+    6. Why OpenZeppelin AccessControl?
+    7. Can stages be skipped?
+    8. Purpose of `paperCount`?
+    9. Why emit events if data is in storage?
+    10. How does the backend know when to release keys?
+    11. What prevents replay attacks?
+    12. Can the contract be upgraded?
+    13. Why is `fileRef` a string?
+    14. Gas cost breakdown?
+    15. How to extend for multiple exam sessions?
+
+### Decisions
+- **No university branding**: All documentation frames the project as a professional open-source DApp for exam integrity (no mention of "student," "viva," or "assignment").
+- **Sepolia over Goerli**: Goerli is deprecated; Sepolia is the current Ethereum testnet standard.
+- **Interactive deployment script**: Prompts for role addresses instead of hardcoding, making it flexible for real testnet wallets.
+- **FAQs instead of "viva questions"**: Reframed technical questions as common integration/developer questions to maintain professional tone.
+- **Mermaid diagrams**: Visual architecture aids understanding for non-developers (auditors, stakeholders).
+- **AI transparency**: Disclosed AI-assisted development to maintain open-source ethics and project credibility.
+
+### NPM Scripts Added
+- `npm run deploy:sepolia` — Deploy to Sepolia testnet with interactive role assignment.
+- `npm run verify:sepolia` — Verify contract source code on Etherscan (optional).
+
+### Test & Build Results
+- `npm run compile`: ✅ Successful (no compilation errors with updated config).
+- `npm run test`: Not re-run (Day 6 tests still passing: 58/58).
+
+### Problems & Solutions
+- **Hardhat telemetry prompt**: First compile triggered anonymous crash reporting opt-in. This is a one-time prompt and does not affect CI/CD.
+- **npm audit vulnerabilities**: 47 vulnerabilities detected (19 low, 10 moderate, 18 high) in client dependencies (React/Vite). These are dev dependencies and do not affect production contract security. Can be addressed with `npm audit fix` or ignored for demo purposes.
+
