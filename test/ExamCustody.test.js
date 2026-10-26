@@ -607,6 +607,16 @@ describe("ExamCustody", function () {
        .withArgs(id);
     });
 
+    it("should prevent moderation if paper is compromised at Created stage", async function () {
+      const id = await createSamplePaper();
+      await examCustody.connect(setter).flagCompromised(id);
+
+      await expect(
+        examCustody.connect(moderator).moderatePaper(id)
+      ).to.be.revertedWithCustomError(examCustody, "PaperIsCompromised")
+       .withArgs(id);
+    });
+
     it("should revert with PaperDoesNotExist for invalid paper ID", async function () {
       await expect(
         examCustody.connect(controller).flagCompromised(999)

@@ -84,5 +84,38 @@
 - **Freeze modifier**: Every transition function is decorated with `notCompromised`. Once compromised, no further transitions can occur.
 
 ### Test results
-- 44/44 passing (2s)
+- 45/45 passing (2s)
+
+---
+
+## Day 4 — Test Suite Expansion & Deployment Script (2026-10-26)
+
+### What was built
+- `test/ExamCustody.test.js`:
+  - 45 automated unit tests covering all critical paths:
+    1. **Happy path**: Sequential progression through all 7 stages + full end-to-end integration test.
+    2. **Wrong role**: AccessControl reverts when any unauthorized role or outsider calls a restricted transition.
+    3. **Skipped stage**: `InvalidStage` custom error checks verifying stage ordering cannot be bypassed or regressed.
+    4. **Early release**: `ExamTimeNotReached` verification ensuring keys cannot be released prematurely.
+    5. **Wrong centre**: `NotAssignedCentre` verification preventing unassigned centres from receiving or releasing keys.
+    6. **Compromised freeze**: Verification that any registered stakeholder can flag emergency leaks, and that all transition functions (`moderatePaper`, `printAndSeal`, `dispatch`, `receiveAtCentre`, `releaseKey`, `openPaper`) immediately freeze.
+- `scripts/deploy.js`:
+  - Automated deployment of `ExamCustody`.
+  - Maps Hardhat pre-funded test accounts to roles:
+    - Account #0: Controller / Admin (`DEFAULT_ADMIN_ROLE`)
+    - Account #1: Paper Setter (`SETTER_ROLE`)
+    - Account #2: Moderator (`MODERATOR_ROLE`)
+    - Account #3: Printer (`PRINTER_ROLE`)
+    - Account #4: Exam Centre 1 (`CENTRE_ROLE`)
+    - Account #5: Exam Centre 2 (`CENTRE_ROLE`)
+  - Grants roles on-chain via Controller and verifies role assignment using `hasRole()`.
+  - Automatically exports `deployment.json` (contract address, network chainId, role-to-address mapping, and full contract ABI) to root and `server/` for the Express backend and React frontend.
+
+### Decisions
+- **Unified Deployment Manifest (`deployment.json`)**: Emitting contract address, role mappings, and ABI to a single JSON eliminates manual copy-paste errors across backend and frontend.
+- **Dual Exam Centre Testing**: Dedicated test accounts for Centre 1 and Centre 2 to explicitly test centre-specific isolation (`NotAssignedCentre`).
+
+### Test & Execution Results
+- `npm run test`: 45/45 passing (2s)
+- `npm run deploy`: Successful deployment to local network and `deployment.json` written.
 
