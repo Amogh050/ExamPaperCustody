@@ -1,6 +1,7 @@
 // Hardhat configuration for ExamPaperCustody
 // Uses the hardhat-toolbox plugin (includes ethers, chai, coverage, gas reports)
 require("@nomicfoundation/hardhat-toolbox");
+require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -14,9 +15,24 @@ module.exports = {
     },
   },
 
-  // Default network is the built-in Hardhat Network (in-memory chain)
-  // We'll add testnet configs later via .env
   networks: {
-    hardhat: {},
+    // Local Hardhat Network (in-memory chain for testing)
+    hardhat: {
+      chainId: 31337,
+    },
+
+    // Sepolia Ethereum testnet
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "",
+      accounts: process.env.SEPOLIA_PRIVATE_KEY
+        ? [process.env.SEPOLIA_PRIVATE_KEY]
+        : [],
+      chainId: 11155111,
+    },
+  },
+
+  // Etherscan verification (optional)
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
   },
 };

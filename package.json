@@ -7,6 +7,8 @@
     "test": "npx hardhat test",
     "node": "npx hardhat node",
     "deploy": "npx hardhat run scripts/deploy.js",
+    "deploy:sepolia": "npx hardhat run scripts/deploySepolia.js --network sepolia",
+    "verify:sepolia": "npx hardhat verify --network sepolia",
     "server": "node server/server.js",
     "encrypt": "node server/encryptPaper.js",
     "client": "npm --prefix client run dev",
@@ -28,6 +30,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.6.1",
     "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
     "express": "^5.3.0"
   },
   "devDependencies": {
