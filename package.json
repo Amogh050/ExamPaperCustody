@@ -8,7 +8,9 @@
     "node": "npx hardhat node",
     "deploy": "npx hardhat run scripts/deploy.js",
     "server": "node server/server.js",
-    "encrypt": "node server/encryptPaper.js"
+    "encrypt": "node server/encryptPaper.js",
+    "client": "npm --prefix client run dev",
+    "client:build": "npm --prefix client run build"
   },
   "repository": {
     "type": "git",

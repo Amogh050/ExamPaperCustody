@@ -157,3 +157,25 @@
 ### Test Results
 - `npm run test`: 58/58 passing (3s) — 45 contract unit tests + 13 server integration tests.
 
+---
+
+## Day 6 — React + Vite Frontend & Event-Driven Timeline (2026-10-26)
+
+### What was built
+- Initialized React + Vite application in `client/` with pure Vanilla CSS glassmorphic aesthetic.
+- `client/src/utils/ethereum.js`:
+  - Web3 provider connecting to `http://localhost:8545` (ChainId: 31337).
+  - Dual wallet support: Seamless switching between pre-configured Hardhat test signers (Accounts #0 to #5) and browser MetaMask wallets.
+  - **Human-Readable Revert Decoder**: Intercepts Solidity custom error selectors (`InvalidStage`, `NotAssignedCentre`, `ExamTimeNotReached`, `PaperIsCompromised`, `CallerHasNoRole`, `AccessControlUnauthorizedAccount`) and decodes them into clear, friendly student explanations.
+  - `fetchPaperTimeline`: Queries `PaperCreated`, `StageChanged`, and `PaperCompromised` contract events to rebuild the chronological chain-of-custody audit trail.
+- `client/src/components/`:
+  - `Navbar.jsx`: Displays live network chainId (31337), Express key service connection status, and tab navigation.
+  - `RoleBar.jsx`: One-click role selector allowing instant switching between Controller, Setter, Moderator, Printer, and Exam Centres with live ETH balances.
+  - `PaperList.jsx`: Cards showing all papers on-chain with stage badges, assigned centre, and exam start time.
+  - `PaperTimeline.jsx`: 7-step visual milestone pipeline tracker with live block-by-block event audit logs.
+  - `RoleActions.jsx`: Context-aware action buttons for each role (approve, print/seal, dispatch, receive, release key, decrypt, and emergency compromise).
+  - `VerifyHashPage.jsx`: Public audit page that computes SHA-256 hashes in the browser using the Web Crypto API (`crypto.subtle`) and matches them against the blockchain record.
+  - `CreatePaperModal.jsx` & `DecryptedPaperModal.jsx`: Setter creation modal and Centre exam paper plaintext viewer with printing support.
+- Build verified:
+  - `npm run client:build` compiles cleanly with Vite.
+

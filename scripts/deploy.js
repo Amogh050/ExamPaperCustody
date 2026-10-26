@@ -138,6 +138,13 @@ async function main() {
     console.log("Saved copy to backend:", serverOutPath);
   }
 
+  const clientSrcDir = path.join(__dirname, "../client/src");
+  if (fs.existsSync(clientSrcDir)) {
+    const clientOutPath = path.join(clientSrcDir, "deployment.json");
+    fs.writeFileSync(clientOutPath, JSON.stringify(deploymentInfo, null, 2));
+    console.log("Saved copy to frontend:", clientOutPath);
+  }
+
   console.log("\n════════════════════════════════════════════════════════════");
   console.log("  Deployment complete! System ready for off-chain services.");
   console.log("════════════════════════════════════════════════════════════\n");
