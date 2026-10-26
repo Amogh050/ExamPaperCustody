@@ -29,3 +29,32 @@
   v2 and v3. Fixed by pinning `hardhat@^2.22.0` and `hardhat-toolbox@^5.0.0`.
 - PowerShell doesn't support `&&` for chaining commands — must run npm commands
   separately.
+
+---
+
+## Day 2 — ExamCustody.sol Part 1 (2026-10-26)
+
+### What was built
+- `contracts/ExamCustody.sol` — the core smart contract with:
+  - 4 role constants (`SETTER_ROLE`, `MODERATOR_ROLE`, `PRINTER_ROLE`,
+    `CENTRE_ROLE`) + Controller via `DEFAULT_ADMIN_ROLE`.
+  - `Stage` enum with 8 states (7 pipeline + Compromised).
+  - `Paper` struct with id, ciphertextHash, fileRef, examTime, stage, centre.
+  - 3 events: `PaperCreated`, `StageChanged`, `PaperCompromised`.
+  - 3 custom errors: `InvalidStage`, `PaperIsCompromised`, `PaperDoesNotExist`.
+  - 3 modifiers: `paperExists`, `onlyStage`, `notCompromised`.
+  - `createPaper()` — Setter-only, stores struct, emits event.
+  - `moderatePaper()` — Moderator-only, Created → Moderated.
+- `test/ExamCustody.test.js` — 15 tests covering deployment, role management,
+  createPaper, and moderatePaper (both happy paths and reverts).
+
+### Decisions
+- **Setter creates papers** (not Controller) — the Setter is the one who
+  encrypts and uploads, so they should register the hash. Controller only
+  manages roles.
+- **Custom errors** over revert strings — cheaper gas and structured data.
+- **Modifier stacking** on transition functions (`onlyRole` + `paperExists` +
+  `notCompromised` + `onlyStage`) — keeps function bodies minimal and readable.
+
+### Test results
+- 15/15 passing (945ms)
