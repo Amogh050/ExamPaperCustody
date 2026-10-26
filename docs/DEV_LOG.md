@@ -58,3 +58,31 @@
 
 ### Test results
 - 15/15 passing (945ms)
+
+---
+
+## Day 3 — Complete Contract & Full Pipeline Testing (2026-10-26)
+
+### What was built
+- `contracts/ExamCustody.sol` completed:
+  - `printAndSeal()` — Printer-only: Moderated → PrintedSealed.
+  - `dispatch()` — Controller-only: PrintedSealed → Dispatched.
+  - `receiveAtCentre()` — Assigned Centre-only: Dispatched → ReceivedAtCentre. Validates that `msg.sender` matches the paper's assigned `centre`.
+  - `releaseKey()` — Assigned Centre-only: ReceivedAtCentre → KeyReleased. Enforces time-lock condition (`block.timestamp >= examTime`).
+  - `openPaper()` — Controller-only: KeyReleased → Opened.
+  - `flagCompromised()` — Emergency freeze callable by any registered role (Setter, Moderator, Printer, Centre, Controller). Sets stage to `Compromised`.
+  - Internal helper `_hasAnyRole()` to ensure random outsiders cannot raise fake alarms.
+  - Custom errors added: `NotAssignedCentre`, `ExamTimeNotReached`, `CallerHasNoRole`.
+- `test/ExamCustody.test.js`:
+  - Expanded from 15 to 44 automated tests.
+  - Dynamic timestamp management using `@nomicfoundation/hardhat-network-helpers`.
+  - Full coverage of happy paths, role restrictions, stage validation, assigned centre check, time-lock verification, compromise freeze semantics, and end-to-end lifecycle.
+
+### Decisions
+- **Assigned Centre check**: In addition to checking `CENTRE_ROLE`, `receiveAtCentre` and `releaseKey` verify that `msg.sender == papers[_paperId].centre`. This prevents Centre A from unlocking Centre B's exam paper.
+- **Time-lock on-chain**: `releaseKey` validates `block.timestamp >= examTime` on-chain before emitting `StageChanged` to `KeyReleased`. The backend key-service inspects this stage before releasing decryption keys.
+- **Freeze modifier**: Every transition function is decorated with `notCompromised`. Once compromised, no further transitions can occur.
+
+### Test results
+- 44/44 passing (2s)
+

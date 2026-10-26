@@ -122,6 +122,15 @@ contract ExamCustody is AccessControl {
     /// @notice Thrown when the paper ID does not exist
     error PaperDoesNotExist(uint256 paperId);
 
+    /// @notice Thrown when the caller is not the assigned centre for this paper
+    error NotAssignedCentre(uint256 paperId, address caller, address expected);
+
+    /// @notice Thrown when releaseKey is called before the exam start time
+    error ExamTimeNotReached(uint256 paperId, uint256 examTime, uint256 currentTime);
+
+    /// @notice Thrown when flagCompromised is called by someone with no role
+    error CallerHasNoRole(address caller);
+
     // ═══════════════════════════════════════════════
     //  MODIFIERS
     // ═══════════════════════════════════════════════
@@ -222,5 +231,169 @@ contract ExamCustody is AccessControl {
         papers[_paperId].stage = Stage.Moderated;
 
         emit StageChanged(_paperId, oldStage, Stage.Moderated, msg.sender);
+    }
+
+    /**
+     * @notice Advance a paper from Moderated → PrintedSealed.
+     *         Only callable by an account with PRINTER_ROLE.
+     *
+     * @param _paperId The ID of the paper to mark as printed & sealed
+     */
+    function printAndSeal(uint256 _paperId)
+        external
+        onlyRole(PRINTER_ROLE)
+        paperExists(_paperId)
+        notCompromised(_paperId)
+        onlyStage(_paperId, Stage.Moderated)
+    {
+        Stage oldStage = papers[_paperId].stage;
+        papers[_paperId].stage = Stage.PrintedSealed;
+        emit StageChanged(_paperId, oldStage, Stage.PrintedSealed, msg.sender);
+    }
+
+    /**
+     * @notice Advance a paper from PrintedSealed → Dispatched.
+     *         Only callable by the Controller (DEFAULT_ADMIN_ROLE).
+     *         The controller authorises dispatch to the exam centre.
+     *
+     * @param _paperId The ID of the paper to dispatch
+     */
+    function dispatch(uint256 _paperId)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        paperExists(_paperId)
+        notCompromised(_paperId)
+        onlyStage(_paperId, Stage.PrintedSealed)
+    {
+        Stage oldStage = papers[_paperId].stage;
+        papers[_paperId].stage = Stage.Dispatched;
+        emit StageChanged(_paperId, oldStage, Stage.Dispatched, msg.sender);
+    }
+
+    /**
+     * @notice Advance a paper from Dispatched → ReceivedAtCentre.
+     *         Only callable by the CENTRE that is assigned to this paper.
+     *
+     *         We check two things:
+     *         1. The caller has CENTRE_ROLE (via onlyRole modifier)
+     *         2. The caller is the specific centre assigned to this paper
+     *
+     * @param _paperId The ID of the paper to confirm receipt of
+     */
+    function receiveAtCentre(uint256 _paperId)
+        external
+        onlyRole(CENTRE_ROLE)
+        paperExists(_paperId)
+        notCompromised(_paperId)
+        onlyStage(_paperId, Stage.Dispatched)
+    {
+        // Extra check: only the assigned centre can receive this paper
+        if (msg.sender != papers[_paperId].centre) {
+            revert NotAssignedCentre(_paperId, msg.sender, papers[_paperId].centre);
+        }
+
+        Stage oldStage = papers[_paperId].stage;
+        papers[_paperId].stage = Stage.ReceivedAtCentre;
+        emit StageChanged(_paperId, oldStage, Stage.ReceivedAtCentre, msg.sender);
+    }
+
+    /**
+     * @notice Advance a paper from ReceivedAtCentre → KeyReleased.
+     *         This is the time-locked transition:
+     *         - Only the assigned centre can call it
+     *         - block.timestamp must be >= the paper's examTime
+     *
+     *         Once this succeeds, the off-chain key service is allowed to
+     *         release the AES decryption key.
+     *
+     * @param _paperId The ID of the paper to release the key for
+     */
+    function releaseKey(uint256 _paperId)
+        external
+        onlyRole(CENTRE_ROLE)
+        paperExists(_paperId)
+        notCompromised(_paperId)
+        onlyStage(_paperId, Stage.ReceivedAtCentre)
+    {
+        // Check 1: caller must be the assigned centre
+        if (msg.sender != papers[_paperId].centre) {
+            revert NotAssignedCentre(_paperId, msg.sender, papers[_paperId].centre);
+        }
+
+        // Check 2: exam time must have arrived
+        if (block.timestamp < papers[_paperId].examTime) {
+            revert ExamTimeNotReached(
+                _paperId,
+                papers[_paperId].examTime,
+                block.timestamp
+            );
+        }
+
+        Stage oldStage = papers[_paperId].stage;
+        papers[_paperId].stage = Stage.KeyReleased;
+        emit StageChanged(_paperId, oldStage, Stage.KeyReleased, msg.sender);
+    }
+
+    /**
+     * @notice Advance a paper from KeyReleased → Opened.
+     *         Only callable by the Controller (DEFAULT_ADMIN_ROLE).
+     *         This is the final normal stage — the exam has begun.
+     *
+     * @param _paperId The ID of the paper to mark as opened
+     */
+    function openPaper(uint256 _paperId)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+        paperExists(_paperId)
+        notCompromised(_paperId)
+        onlyStage(_paperId, Stage.KeyReleased)
+    {
+        Stage oldStage = papers[_paperId].stage;
+        papers[_paperId].stage = Stage.Opened;
+        emit StageChanged(_paperId, oldStage, Stage.Opened, msg.sender);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  COMPROMISE (FREEZE) FUNCTION
+    // ═══════════════════════════════════════════════
+
+    /**
+     * @notice Flag a paper as Compromised. Can be called by ANY registered
+     *         role (Setter, Moderator, Printer, Centre, or Controller).
+     *
+     *         Once compromised, the paper is FROZEN — no further stage
+     *         transitions are possible (the notCompromised modifier blocks them).
+     *
+     * @param _paperId The ID of the paper to flag
+     */
+    function flagCompromised(uint256 _paperId)
+        external
+        paperExists(_paperId)
+        notCompromised(_paperId)
+    {
+        // The caller must hold at least one of the five roles
+        if (!_hasAnyRole(msg.sender)) {
+            revert CallerHasNoRole(msg.sender);
+        }
+
+        papers[_paperId].stage = Stage.Compromised;
+        emit PaperCompromised(_paperId, msg.sender);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  INTERNAL HELPERS
+    // ═══════════════════════════════════════════════
+
+    /**
+     * @dev Returns true if the account holds at least one of the five roles.
+     *      Used by flagCompromised so that any stakeholder can raise the alarm,
+     *      but random outsiders cannot.
+     */
+    function _hasAnyRole(address _account) internal view returns (bool) {
+        return hasRole(DEFAULT_ADMIN_ROLE, _account)
+            || hasRole(SETTER_ROLE, _account)
+            || hasRole(MODERATOR_ROLE, _account)
+            || hasRole(PRINTER_ROLE, _account)
+            || hasRole(CENTRE_ROLE, _account);
     }
 }
