@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Hardhat build artifacts
+artifacts/
+cache/
+typechain-types/
+
+# Environment secrets — NEVER commit
+.env
+
+# Coverage reports
+coverage/
+coverage.json
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Editor files
+.vscode/
+*.swp
+
+# Client build output (Vite)
+client/dist/
