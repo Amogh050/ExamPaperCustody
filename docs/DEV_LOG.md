@@ -119,3 +119,41 @@
 - `npm run test`: 45/45 passing (2s)
 - `npm run deploy`: Successful deployment to local network and `deployment.json` written.
 
+---
+
+## Day 5 — Off-Chain Encryption & Express Key Service (2026-10-26)
+
+### What was built
+- `server/cryptoUtils.js`:
+  - Native Node.js `crypto` implementation of **AES-256-GCM** authenticated encryption (256-bit key, 12-byte IV, 16-byte authentication tag).
+  - SHA-256 hashing utility producing `0x`-prefixed 32-byte hex hashes for on-chain `bytes32 ciphertextHash` verification.
+  - Authenticated decryption enforcing GCM tag verification (prevents ciphertext tampering).
+- `server/encryptPaper.js`:
+  - CLI tool for Paper Setters to encrypt exam papers off-chain.
+  - Automatically generates keys and IVs, calculates ciphertext hashes, and writes ciphertext bundles to `server/storage/ciphertexts/<id>.json`.
+  - Securely stores the 256-bit decryption key in `server/storage/keys/<id>.key`.
+  - Outputs on-chain parameters for `createPaper()`.
+- `server/server.js`:
+  - Express server guarding decryption key release:
+    - `GET /api/status`: Health check & blockchain connection status.
+    - `GET /api/papers`: Off-chain encrypted catalog.
+    - `GET /api/papers/:id/ciphertext`: Serves encrypted ciphertext bundle.
+    - `GET /api/challenge/:id`: Issues cryptographic anti-replay challenges.
+    - `POST /api/key/:id`: Releases key only if:
+      1. ECDSA wallet signature matches the claiming address (`ethers.verifyMessage`).
+      2. On-chain paper stage is `KeyReleased` (5).
+      3. Caller address matches the paper's assigned `centre`.
+      4. Paper is NOT flagged as `Compromised`.
+    - `POST /api/papers/:id/decrypt`: Decryption endpoint for centres.
+    - `POST /api/verify-hash`: Public verification endpoint matching ciphertext hashes against the contract.
+- `test/KeyService.test.js`:
+  - 13 automated integration tests verifying wallet signature verification, challenge generation, stage gating, assigned centre enforcement, key release, and decryption.
+
+### Decisions
+- **Anti-Replay Challenge-Response**: Centers sign a fresh timestamped challenge with their private key, preventing replay attacks and man-in-the-middle key theft.
+- **Off-Chain Key Storage**: Decryption keys and plaintexts never touch the blockchain. Only ciphertext SHA-256 hashes reside on-chain.
+- **Contract Injection for Testing**: Added `setContractInstance()` allowing seamless in-memory Hardhat testing without requiring external RPC servers during tests.
+
+### Test Results
+- `npm run test`: 58/58 passing (3s) — 45 contract unit tests + 13 server integration tests.
+
