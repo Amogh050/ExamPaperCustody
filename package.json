@@ -6,7 +6,9 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "node": "npx hardhat node",
-    "deploy": "npx hardhat run scripts/deploy.js"
+    "deploy": "npx hardhat run scripts/deploy.js",
+    "server": "node server/server.js",
+    "encrypt": "node server/encryptPaper.js"
   },
   "repository": {
     "type": "git",
@@ -22,7 +24,9 @@
   "homepage": "https://github.com/Amogh050/ExamPaperCustody#readme",
   "description": "",
   "dependencies": {
-    "@openzeppelin/contracts": "^5.6.1"
+    "@openzeppelin/contracts": "^5.6.1",
+    "cors": "^2.8.6",
+    "express": "^5.3.0"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
