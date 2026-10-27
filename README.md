@@ -4,7 +4,6 @@
 
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636?logo=solidity)](https://soliditylang.org/)
 [![Hardhat](https://img.shields.io/badge/Hardhat-2.29-yellow)](https://hardhat.org/)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 
 ---
 
@@ -460,45 +459,12 @@ This project is open for contributions! Areas needing help:
 
 ---
 
-## 📜 License
-
-This project is licensed under the **ISC License**.
-
----
-
-## 🙏 Acknowledgments
-
-### Inspiration & Reference
-
-This project draws architectural inspiration from [**AgroChain**](https://github.com/souvikdinda/AgroChain) by @souvikdinda, an MIT-licensed supply chain DApp that demonstrates role-based stage progression on Ethereum. We studied AgroChain's role-to-stage mapping pattern and adapted it for exam paper custody with:
-- OpenZeppelin AccessControl (replacing manual role lookups)
-- Time-locked transitions
-- Off-chain encryption layer
-- Emergency compromise handling
-
-**Key differences from AgroChain:**
-- Uses Hardhat instead of Truffle/Ganache
-- Employs custom errors instead of require strings (gas savings)
-- Implements assigned-actor verification (specific centre, not just role)
-- Adds cryptographic challenge-response for key release
-
 ### Development Tools
 
 - **OpenZeppelin Contracts**: Battle-tested AccessControl implementation
 - **Hardhat**: Modern Ethereum development environment
 - **ethers.js**: Ethereum library for smart contract interaction
 
-### AI Transparency
-
-This project was developed with assistance from AI coding tools (Claude by Anthropic) for:
-- Boilerplate generation
-- Documentation drafting
-- Test scaffolding
-- Code review suggestions
-
-**All core logic, security decisions, and architecture were human-designed and reviewed.** AI was used as a productivity accelerator, not an autonomous developer.
-
----
 
 ## 📧 Contact
 
